@@ -34,4 +34,4 @@ go.work.sum
 # Custom
 .DS_Store
 _build
-/logs/debug.log
+logs/debug.log
