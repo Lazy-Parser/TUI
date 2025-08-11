@@ -2,7 +2,7 @@ package tui
 
 import (
 	"fmt"
-	"tui/internal/tui/components"
+	"github.com/Lazy-Parser/TUI/internal/tui/components"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

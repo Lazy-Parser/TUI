@@ -1,4 +1,4 @@
-module tui
+module github.com/Lazy-Parser/TUI
 
 go 1.24.2
 

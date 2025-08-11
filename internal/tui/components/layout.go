@@ -1,8 +1,8 @@
 package components
 
 import (
-	page_default "tui/internal/tui/components/pages/default"
-	page_viewer "tui/internal/tui/components/pages/viewer"
+	page_default "github.com/Lazy-Parser/TUI/internal/tui/components/pages/default"
+	page_viewer "github.com/Lazy-Parser/TUI/internal/tui/components/pages/viewer"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"

@@ -1,7 +1,7 @@
 package page_viewer
 
 import (
-	"tui/internal/tui/components/pages"
+	"github.com/Lazy-Parser/TUI/internal/tui/components/pages"
 )
 
 func NewPage() *pages.Page {

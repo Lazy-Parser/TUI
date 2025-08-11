@@ -1,7 +1,7 @@
 package components
 
 import (
-	"tui/internal/tui/components/pages"
+	"github.com/Lazy-Parser/TUI/internal/tui/components/pages"
 
 	tea "github.com/charmbracelet/bubbletea"
 )

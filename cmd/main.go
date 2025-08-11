@@ -1,8 +1,7 @@
 package main
 
 import (
-	"tui/internal/tui"
-	"github.com/Lazy-Parser/Collector/market"
+	"github.com/Lazy-Parser/TUI/internal/tui"
 )
 
 func main() {

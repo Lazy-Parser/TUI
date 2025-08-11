@@ -5,7 +5,7 @@ import (
 	"log"
 	"runtime"
 	"strings"
-	"tui/internal/tui/components/theme"
+	"github.com/Lazy-Parser/TUI/internal/tui/components/theme"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
