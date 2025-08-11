@@ -30,3 +30,8 @@ go.work.sum
 # Editor/IDE
 # .idea/
 # .vscode/
+
+# Custom
+.DS_Store
+_build
+/logs/debug.log
