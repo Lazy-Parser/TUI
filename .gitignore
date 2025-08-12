@@ -38,5 +38,5 @@ _build
 logs/debug.log
 !logs/.gitkeep
 
-storage/storage.log
+storage/storage.db
 !storage/.gitkeep
