@@ -1,6 +1,7 @@
 package components
 
 import (
+	"github.com/Lazy-Parser/Collector/market"
 	page_default "github.com/Lazy-Parser/TUI/internal/tui/components/pages/default"
 	page_viewer "github.com/Lazy-Parser/TUI/internal/tui/components/pages/viewer"
 
@@ -70,7 +71,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.height = msg.Height
 
 	case page_default.PageSelected:
-		m.pageService.SetCurrentPage(1)
+		cmd := m.pageService.SetCurrentPage(1)
+		return m, cmd
 	}
 
 	// after layout updates, update selected page
@@ -135,10 +137,10 @@ func joinComponents(header, content, footer string, model model) string {
 	return lipgloss.JoinVertical(lipgloss.Top, header, content, footer)
 }
 
-func InitLayout() tea.Model {
+func InitLayout(tokenRepo market.TokenRepo) tea.Model {
 	payload := []*PageOption{
 		NewPageOption(page_default.NewPageDefault()),
-		NewPageOption(page_viewer.NewPage()),
+		NewPageOption(page_viewer.NewPage(tokenRepo)),
 	}
 
 	return model{

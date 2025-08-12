@@ -1,21 +1,25 @@
 package main
 
 import (
-	"fmt"
+	"os"
+	"path/filepath"
 
-	service "github.com/Lazy-Parser/Collector/config/service"
 	"github.com/Lazy-Parser/TUI/internal/tui"
+
+	"github.com/Lazy-Parser/Collector/database"
 )
 
 func main() {
-	// put some test fields for tests
-	cfgService, err := service.NewConfig("some filepath")
+	wd, _ := os.Getwd()
+	path := filepath.Join(wd, "storage", "storage.db")
+
+	db, err := database.Start(path)
 	if err != nil {
 		panic(err)
 	}
-	fmt.Println(cfgService.Coingecko.API.KEY)
+	tokenRepo := database.NewTokenRepo(db)
 
-	if err := tui.Run(); err != nil {
+	if err := tui.Run(tokenRepo); err != nil {
 		panic(err)
 	}
 }
