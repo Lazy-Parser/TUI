@@ -34,5 +34,9 @@ go.work.sum
 # Custom
 .DS_Store
 _build
+
 logs/debug.log
 !logs/.gitkeep
+
+storage/storage.log
+!storage/.gitkeep
