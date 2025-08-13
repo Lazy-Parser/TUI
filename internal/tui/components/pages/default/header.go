@@ -5,6 +5,7 @@ import (
 	"log"
 	"runtime"
 	"strings"
+
 	"github.com/Lazy-Parser/TUI/internal/tui/components/theme"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -33,7 +34,6 @@ func (m modelHeader) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width - 2 // offset for borders (1 for left and 1 for right)
 		m.height = msg.Height
-		return m, nil
 	}
 
 	updatedModel, cmd := m.timer.Update(msg)
@@ -83,9 +83,10 @@ func newHeader() *modelHeader {
 	}
 
 	return &modelHeader{
-		logo:    logo,
-		os:      runtime.GOOS,
-		timer:   newTimer(),
-		cpuInfo: cpuInfo,
+		logo:     logo,
+		os:       runtime.GOOS,
+		timer:    newTimer(),
+		cpuInfo:  cpuInfo,
+		someInfo: "Vlad pidor",
 	}
 }

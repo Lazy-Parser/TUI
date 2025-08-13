@@ -2,29 +2,44 @@ package page_viewer
 
 import (
 	"context"
-	"fmt"
 	"log"
-	"strings"
 
 	"github.com/Lazy-Parser/Collector/market"
+	custom "github.com/Lazy-Parser/TUI/internal/tui/components/table"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
 
+var baseStyle = lipgloss.NewStyle().
+	BorderStyle(lipgloss.NormalBorder()).
+	BorderForeground(lipgloss.Color("240"))
+
 type mainView struct {
+	width, height int
+
 	tokenRepo market.TokenRepo
 	tokens    []market.Token
+
+	table custom.Table
 }
 
 func NewMain(tokenRepo market.TokenRepo) tea.Model {
-	return &mainView{tokenRepo: tokenRepo}
+	return &mainView{tokenRepo: tokenRepo, table: custom.NewModel()}
 }
 
 func (m *mainView) Init() tea.Cmd {
-	return loadAllTokens(context.Background(), m.tokenRepo)
+	cmd := loadAllTokens(context.Background(), m.tokenRepo)
+	cmd2 := m.table.Init()
+
+	return tea.Batch(cmd, cmd2)
 }
 
 func (m *mainView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+
+	case tea.WindowSizeMsg:
+		m.width = msg.Width - 2 // offset for border (border goes to the left)
+		m.height = msg.Height
 
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -43,33 +58,17 @@ func (m *mainView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 	case tokensMsg:
-		log.Println("New message!")
-		if msg.err != nil {
-			log.Println(fmt.Errorf("failed to load tokens: %w", msg.err))
-			return m, nil
-		}
-		if len(msg.tokens) == 0 {
-			log.Println("Not tokens loaded...")
-			m.tokens = nil
-		} else {
-			log.Println("Tokens exist!")
-			m.tokens = msg.tokens
-		}
+		return onTokensMsg(m, &msg)
+
+		// do the same for pairsMsg
 	}
 
-	return m, nil
+	var cmd tea.Cmd
+	m.table, cmd = m.table.Update(msg)
+
+	return m, cmd
 }
 
 func (m *mainView) View() string {
-	if len(m.tokens) == 0 {
-		return "Empty..."
-	}
-
-	var strBuilder strings.Builder
-	for _, token := range m.tokens {
-		strBuilder.WriteString(token.Name)
-		strBuilder.WriteString("\n")
-	}
-
-	return strBuilder.String()
+	return baseStyle.Render(m.table.View()) + "\n"
 }
