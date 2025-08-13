@@ -7,10 +7,11 @@ require (
 	github.com/charmbracelet/bubbles v0.21.0
 	github.com/charmbracelet/bubbletea v1.3.6
 	github.com/charmbracelet/lipgloss v1.1.0
+	github.com/evertras/bubble-table v0.17.2
 	github.com/shirou/gopsutil/v4 v4.25.7
 )
 
-replace github.com/Lazy-Parser/Collector => /Users/mac/Documents/Cleopatra/core
+replace github.com/Lazy-Parser/Collector => /Users/vladislavroshko/Documents/Cleopatra/core
 
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect
@@ -21,7 +22,6 @@ require (
 	github.com/charmbracelet/x/term v0.2.1 // indirect
 	github.com/ebitengine/purego v0.8.4 // indirect
 	github.com/erikgeiser/coninput v0.0.0-20211004153227-1c3628e74d0f // indirect
-	github.com/evertras/bubble-table v0.17.2 // indirect
 	github.com/go-ole/go-ole v1.2.6 // indirect
 	github.com/jinzhu/inflection v1.0.0 // indirect
 	github.com/jinzhu/now v1.1.5 // indirect

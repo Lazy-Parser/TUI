@@ -5,6 +5,7 @@ import (
 	"log"
 	"runtime"
 	"strings"
+
 	"github.com/Lazy-Parser/TUI/internal/tui/components/theme"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -82,9 +83,10 @@ func newHeader() *modelHeader {
 	}
 
 	return &modelHeader{
-		logo:    logo,
-		os:      runtime.GOOS,
-		timer:   newTimer(),
-		cpuInfo: cpuInfo,
+		logo:     logo,
+		os:       runtime.GOOS,
+		timer:    newTimer(),
+		cpuInfo:  cpuInfo,
+		someInfo: "Vlad pidor",
 	}
 }
