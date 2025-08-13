@@ -11,10 +11,23 @@ type tokensMsg struct {
 	tokens []market.Token
 	err    error
 }
-
 func loadAllTokens(ctx context.Context, tokenRepo market.TokenRepo) tea.Cmd {
 	return func() tea.Msg {
 		tokens, err := tokenRepo.GetAll(ctx)
 		return tokensMsg{tokens: tokens, err: err}
+	}
+}
+
+type tokenAmountMsg struct{ amount int }
+func setTokenAmount(amount int) tea.Cmd {
+	return func() tea.Msg {
+		return tokenAmountMsg{amount: amount}
+	}
+}
+
+type pairAmountMsg struct{ amount int }
+func setPairAmount(amount int) tea.Cmd {
+	return func() tea.Msg {
+		return pairAmountMsg{amount: amount}
 	}
 }

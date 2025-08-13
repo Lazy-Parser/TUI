@@ -60,6 +60,15 @@ func (ps *PageService) Update(i int, msg tea.Msg) tea.Cmd {
 	return cmd
 }
 
+// Update all pages 
+func (ps *PageService) UpdateAll(msg tea.Msg) tea.Cmd {
+	cmds := make([]tea.Cmd, len(ps.pages))
+	for i := range ps.pages {
+		cmds[i] = ps.Update(i, msg)
+	}
+	return tea.Batch(cmds...)
+}
+
 // Set current page by provided index and init it, so return a command
 func (ps *PageService) SetCurrentPage(i int) tea.Cmd {
 	ps.currentPage = i

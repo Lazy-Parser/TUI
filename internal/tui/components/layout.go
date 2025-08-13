@@ -11,7 +11,7 @@ import (
 
 var (
 	skyBlue = lipgloss.Color("#4A90E2")
-	peach   = lipgloss.Color("#fff")
+	// peach   = lipgloss.Color("#fff")
 )
 
 type model struct {
@@ -69,6 +69,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width - 2 // offset for border (border goes to the left)
 		m.height = msg.Height
+		// window size msg is very important, so update all pages
+		cmd := m.pageService.UpdateAll(msg)
+		return m, cmd
 
 	case page_default.PageSelected:
 		cmd := m.pageService.SetCurrentPage(1)
@@ -94,7 +97,6 @@ func (m model) View() string {
 			Align(lipgloss.Center).
 			Border(lipgloss.NormalBorder(), true).
 			BorderForeground(skyBlue).
-			Background(lipgloss.Color(peach)).
 			Width(m.width).
 			Render(m.pageService.GetCurrentPage().page.Header.View())
 	}
@@ -105,7 +107,6 @@ func (m model) View() string {
 			Align(lipgloss.Center).
 			Border(lipgloss.NormalBorder(), true).
 			BorderForeground(skyBlue).
-			Background(lipgloss.Color(peach)).
 			Width(m.width).
 			Render(m.pageService.GetCurrentPage().page.Footer.View())
 	}
@@ -115,7 +116,6 @@ func (m model) View() string {
 		// accommodate header and footer
 		Border(lipgloss.RoundedBorder(), true).
 		BorderForeground(skyBlue).
-		Background(lipgloss.Color(peach)).
 		Height(m.height-lipgloss.Height(header)-lipgloss.Height(footer)-m.heightOffset).
 		Align(lipgloss.Center, lipgloss.Center).
 		Render(m.pageService.GetCurrentPage().page.Main.View())

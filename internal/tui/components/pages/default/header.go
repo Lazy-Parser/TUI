@@ -33,7 +33,6 @@ func (m modelHeader) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width - 2 // offset for borders (1 for left and 1 for right)
 		m.height = msg.Height
-		return m, nil
 	}
 
 	updatedModel, cmd := m.timer.Update(msg)
