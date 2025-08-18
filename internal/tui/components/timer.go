@@ -1,4 +1,4 @@
-package page_default
+package component
 
 import (
 	"fmt"
@@ -8,28 +8,36 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-type tickMsg time.Time
+type TickMsg struct {
+	id int
+	t  time.Time
+}
 
-func tick() tea.Cmd {
+func tick(id int) tea.Cmd {
 	return tea.Tick(time.Second, func(t time.Time) tea.Msg {
-		return tickMsg(t)
+		return TickMsg{t: t, id: id}
 	})
 }
 
-type modelTimer struct {
+type Timer struct {
 	start   time.Time
 	elapsed time.Duration // how many time passed
+	id      int
 }
 
-func (t modelTimer) Init() tea.Cmd {
-	return tick()
+func (t Timer) Init() tea.Cmd {
+	return tick(t.id)
 }
 
-func (t modelTimer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (t Timer) Update(msg tea.Msg) (Timer, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tickMsg:
+	case TickMsg:
+		if msg.id != t.id {
+			return t, nil
+		}
+
 		t.elapsed = time.Since(t.start).Round(time.Second)
-		return t, tick()
+		return t, tick(t.id)
 	case tea.KeyMsg:
 		if msg.Type == tea.KeyCtrlC {
 			return t, tea.Quit
@@ -39,7 +47,7 @@ func (t modelTimer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return t, nil
 }
 
-func (t modelTimer) View() string {
+func (t Timer) View() string {
 	total := int(t.elapsed.Seconds())
 
 	d := total / 86400
@@ -62,9 +70,10 @@ func (t modelTimer) View() string {
 	return strBuilder.String()
 }
 
-func newTimer() modelTimer {
-	return modelTimer{
+func NewTimer(id int) Timer {
+	return Timer{
 		start:   time.Now(),
 		elapsed: 0,
+		id:      id,
 	}
 }

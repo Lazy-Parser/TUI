@@ -2,7 +2,7 @@ package page_viewer
 
 import (
 	"github.com/Lazy-Parser/Collector/market"
-	"github.com/Lazy-Parser/TUI/internal/tui/components/pages"
+	"github.com/Lazy-Parser/TUI/internal/tui/pages"
 )
 
 func NewPage(tokenRepo market.TokenRepo) *pages.Page {

@@ -11,7 +11,8 @@ require (
 	github.com/shirou/gopsutil/v4 v4.25.7
 )
 
-replace github.com/Lazy-Parser/Collector => /Users/vladislavroshko/Documents/Cleopatra/core
+// /Users/vladislavroshko/Documents/Cleopatra/core
+replace github.com/Lazy-Parser/Collector => /home/hades/Documents/Cleopatra/core/
 
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect

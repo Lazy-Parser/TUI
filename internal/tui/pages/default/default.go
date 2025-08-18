@@ -1,7 +1,7 @@
 package page_default
 
 import (
-	"github.com/Lazy-Parser/TUI/internal/tui/components/pages"
+	"github.com/Lazy-Parser/TUI/internal/tui/pages"
 )
 
 func NewPageDefault() *pages.Page {

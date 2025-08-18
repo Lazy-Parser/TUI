@@ -1,6 +1,10 @@
-package custom
+package component
 
 import (
+	"fmt"
+	"time"
+
+	"github.com/Lazy-Parser/Collector/market"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/evertras/bubble-table/table"
 )
@@ -24,6 +28,10 @@ type Table struct {
 	verticalMargin   int
 }
 
+type SetContentTokensMsg struct {
+	Tokens []market.Token
+}
+
 func (ct Table) Init() tea.Cmd {
 	return nil
 }
@@ -38,6 +46,10 @@ func (ct Table) Update(msg tea.Msg) (Table, tea.Cmd) {
 	cmds = append(cmds, cmd)
 
 	switch msg := msg.(type) {
+	case SetContentTokensMsg:
+		ct.table = ct.setRows(msg.Tokens)
+		return ct, nil
+
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "q":
@@ -78,23 +90,40 @@ func (ct Table) calculateHeight() int {
 func NewModel() Table {
 	return Table{
 		table: table.New([]table.Column{
-			table.NewColumn("name", "Name", 10),
-			table.NewFlexColumn("network", "Network", 1),
-			table.NewFlexColumn("decimal", "Decimal", 3),
-		}).WithRows([]table.Row{
-			table.NewRow(table.RowData{
-				"name":    "BTC",
-				"network": "Ethereum",
-				"decimal": "8",
-			}),
-			table.NewRow(table.RowData{
-				"name":    "ETH",
-				"network": "Solana",
-				"decimal": "18",
-			}),
-		}).WithStaticFooter("A footer!"),
+			table.NewFlexColumn("name", "Name", 3),
+			table.NewFlexColumn("network", "Network", 3),
+			table.NewFlexColumn("decimal", "Decimal", 1),
+			table.NewFlexColumn("address", "Address", 5),
+			table.NewFlexColumn("createdAt", "Created At", 3),
+			table.NewFlexColumn("fee", "fee", 1),
+		}).WithStaticFooter("Waiting...").Focused(true).SelectableRows(true).BorderRounded(),
 
 		horizontalMargin: 4,
 		verticalMargin:   2,
 	}
+}
+
+func (ct Table) setRows(tokens []market.Token) table.Model {
+	rows := make([]table.Row, len(tokens))
+	for _, token := range tokens {
+		rowData := table.RowData{
+			"name":      token.Name,
+			"network":   token.Network,
+			"decimal":   token.Network,
+			"address":   token.Address,
+			"createdAt": milliToDate(token.CreateTime),
+			"fee":       token.WithdrawFee,
+		}
+
+		rows = append(rows, table.NewRow(rowData))
+	}
+
+	ct.table.WithRows(rows)
+	return ct.table
+}
+
+func milliToDate(milliseconds int64) string {
+	y, m, d := time.UnixMilli(milliseconds).Date()
+
+	return fmt.Sprintf("%s %d, %d", m.String(), d, y)
 }

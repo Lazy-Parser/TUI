@@ -1,8 +1,11 @@
 package page_default
 
 import (
+	"log"
 	"strings"
-	"github.com/Lazy-Parser/TUI/internal/tui/components/theme"
+
+	"github.com/Lazy-Parser/TUI/internal/tui/command"
+	"github.com/Lazy-Parser/TUI/internal/tui/theme"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -72,7 +75,7 @@ func (m modelBody) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEnter:
 			switch m.selected {
 			case 0:
-				// Generate
+				return m, SelectPage("Generator")
 			case 1:
 				// Listen prices
 			case 2:
@@ -83,7 +86,9 @@ func (m modelBody) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, OpenNewTerminal()
 			case 4:
 				// Exit
-				return m, tea.Quit
+				log.Println("sdfjkldhjkfjgsh")
+				cmd := command.OnQuit()
+				return m, cmd
 			}
 		}
 	}

@@ -6,7 +6,8 @@ import (
 	"runtime"
 	"strings"
 
-	"github.com/Lazy-Parser/TUI/internal/tui/components/theme"
+	component "github.com/Lazy-Parser/TUI/internal/tui/components"
+	"github.com/Lazy-Parser/TUI/internal/tui/theme"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -18,7 +19,7 @@ var ()
 type modelHeader struct {
 	cpuInfo  []cpu.InfoStat
 	os       string
-	timer    modelTimer
+	timer    component.Timer
 	someInfo string
 	logo     string
 	width    int
@@ -30,16 +31,15 @@ func (m modelHeader) Init() tea.Cmd {
 }
 
 func (m modelHeader) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+	var cmd tea.Cmd
+
 	switch msg := msg.(type) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width - 2 // offset for borders (1 for left and 1 for right)
 		m.height = msg.Height
 	}
 
-	updatedModel, cmd := m.timer.Update(msg)
-	a, _ := updatedModel.(modelTimer)
-	m.timer = a
-
+	m.timer, cmd = m.timer.Update(msg)
 	return m, cmd
 }
 
@@ -85,7 +85,7 @@ func newHeader() *modelHeader {
 	return &modelHeader{
 		logo:     logo,
 		os:       runtime.GOOS,
-		timer:    newTimer(),
+		timer:    component.NewTimer(0),
 		cpuInfo:  cpuInfo,
 		someInfo: "Vlad pidor",
 	}

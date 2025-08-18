@@ -1,9 +1,12 @@
-package components
+package tui
 
 import (
 	"github.com/Lazy-Parser/Collector/market"
-	page_default "github.com/Lazy-Parser/TUI/internal/tui/components/pages/default"
-	page_viewer "github.com/Lazy-Parser/TUI/internal/tui/components/pages/viewer"
+	"github.com/Lazy-Parser/TUI/internal/tui/command"
+	"github.com/Lazy-Parser/TUI/internal/tui/pages"
+	page_default "github.com/Lazy-Parser/TUI/internal/tui/pages/default"
+	page_generator "github.com/Lazy-Parser/TUI/internal/tui/pages/generator"
+	page_viewer "github.com/Lazy-Parser/TUI/internal/tui/pages/viewer"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
@@ -22,7 +25,7 @@ type model struct {
 	heightOffset int // because center part of the layout has a border, which adds an extra line
 	widthOffset  int
 
-	pageService *PageService
+	pageService *pages.PageService
 }
 
 func (m model) Init() tea.Cmd {
@@ -37,7 +40,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.String() {
 
 		case "q":
-			return m, tea.Quit
+			return m, command.OnQuit()
 
 		case "1":
 			if m.showHeader {
@@ -60,7 +63,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		switch msg.Type {
 
 		case tea.KeyCtrlC:
-			return m, tea.Quit
+			cmd := command.OnQuit()
+			return m, cmd
 
 		// go back to the default page
 		case tea.KeyEsc:
@@ -74,14 +78,22 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 
 	case page_default.PageSelected:
-		cmd := m.pageService.SetCurrentPage(1)
-		return m, cmd
+		switch msg.Title {
+		case "Database":
+			cmd := m.pageService.SetCurrentPage(1)
+			return m, cmd
+
+		case "Generator":
+			cmd := m.pageService.SetCurrentPage(2)
+			return m, cmd
+		}
+
 	}
 
 	// after layout updates, update selected page
-	cmd := m.pageService.Update(m.pageService.currentPage, msg)
+	cmd := m.pageService.Update(m.pageService.CurrentPageIdx(), msg)
 
-	if m.pageService.currentPage != 0 {
+	if m.pageService.CurrentPageIdx() != 0 {
 		// and update default page, because it contains timer
 		oneMoreCmd := m.pageService.Update(0, msg)
 		cmd = tea.Batch(cmd, oneMoreCmd)
@@ -98,7 +110,7 @@ func (m model) View() string {
 			Border(lipgloss.NormalBorder(), true).
 			BorderForeground(skyBlue).
 			Width(m.width).
-			Render(m.pageService.GetCurrentPage().page.Header.View())
+			Render(m.pageService.GetCurrentPage().Page.Header.View())
 	}
 
 	var footer string
@@ -108,7 +120,7 @@ func (m model) View() string {
 			Border(lipgloss.NormalBorder(), true).
 			BorderForeground(skyBlue).
 			Width(m.width).
-			Render(m.pageService.GetCurrentPage().page.Footer.View())
+			Render(m.pageService.GetCurrentPage().Page.Footer.View())
 	}
 
 	content := lipgloss.NewStyle().
@@ -118,7 +130,7 @@ func (m model) View() string {
 		BorderForeground(skyBlue).
 		Height(m.height-lipgloss.Height(header)-lipgloss.Height(footer)-m.heightOffset).
 		Align(lipgloss.Center, lipgloss.Center).
-		Render(m.pageService.GetCurrentPage().page.Main.View())
+		Render(m.pageService.GetCurrentPage().Page.Main.View())
 
 	return joinComponents(header, content, footer, m)
 }
@@ -138,13 +150,14 @@ func joinComponents(header, content, footer string, model model) string {
 }
 
 func InitLayout(tokenRepo market.TokenRepo) tea.Model {
-	payload := []*PageOption{
-		NewPageOption(page_default.NewPageDefault()),
-		NewPageOption(page_viewer.NewPage(tokenRepo)),
+	payload := []*pages.PageOption{
+		pages.NewPageOption(page_default.NewPageDefault()),
+		pages.NewPageOption(page_viewer.NewPage(tokenRepo)),
+		pages.NewPageOption(page_generator.NewPage()),
 	}
 
 	return model{
-		pageService:  NewPageService(payload),
+		pageService:  pages.NewPageService(payload),
 		showHeader:   true,
 		showFooter:   true,
 		heightOffset: 2,

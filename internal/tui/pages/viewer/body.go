@@ -2,17 +2,11 @@ package page_viewer
 
 import (
 	"context"
-	"log"
 
 	"github.com/Lazy-Parser/Collector/market"
-	custom "github.com/Lazy-Parser/TUI/internal/tui/components/table"
+	custom "github.com/Lazy-Parser/TUI/internal/tui/components"
 	tea "github.com/charmbracelet/bubbletea"
-	"github.com/charmbracelet/lipgloss"
 )
-
-var baseStyle = lipgloss.NewStyle().
-	BorderStyle(lipgloss.NormalBorder()).
-	BorderForeground(lipgloss.Color("240"))
 
 type mainView struct {
 	width, height int
@@ -44,11 +38,9 @@ func (m *mainView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.KeyMsg:
 		switch msg.String() {
 		case "r":
-			log.Println("Reload")
 			return m, loadAllTokens(context.Background(), m.tokenRepo)
 
 		case "q":
-			log.Println("Quit")
 			return m, tea.Quit
 		}
 
@@ -70,5 +62,5 @@ func (m *mainView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *mainView) View() string {
-	return baseStyle.Render(m.table.View()) + "\n"
+	return m.table.View()
 }
