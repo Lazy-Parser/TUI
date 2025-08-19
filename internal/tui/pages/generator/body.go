@@ -1,99 +1,47 @@
 package page_generator
 
 import (
+	"context"
 	"fmt"
-	"math/rand/v2"
-	"time"
 
-	component "github.com/Lazy-Parser/TUI/internal/tui/components"
+	"github.com/Lazy-Parser/Collector/api"
+	"github.com/Lazy-Parser/Collector/chains"
+	"github.com/Lazy-Parser/Collector/config"
+	"github.com/Lazy-Parser/Collector/market"
+	"github.com/Lazy-Parser/Collector/worker"
 	tea "github.com/charmbracelet/bubbletea"
 )
+type FuturesMsg struct {
+	futures []market.Token
+	err     error
+}
 
 type mainView struct {
-	progress1 tea.Model
-	progress2 tea.Model
-	progress3 tea.Model
-
-	counter1 int
-	counter2 int
-	counter3 int
+	cfg           *config.Config
+	chainsService *chains.Chains
+	start         bool
+	futures       []market.Token
+	steps         []Step
 }
 
-func NewMain() tea.Model {
-	return &mainView{
-		progress1: component.NewProgress(10, 0),
-		progress2: component.NewProgress(10, 1),
-		progress3: component.NewProgress(10, 2),
-	}
-}
-
-func ticker(id int) tea.Cmd {
-	return func() tea.Msg {
-		// wait
-		wait := time.Duration(random(0.1, 2.0) * float64(time.Second))
-		time.Sleep(wait)
-
-		return component.ProgressMsg{
-			Increment: true,
-			Id:        id,
-		}
-	}
+func NewMain(cfg *config.Config, chainsService *chains.Chains) tea.Model {
+	return &mainView{cfg: cfg, chainsService: chainsService, steps: make([]Step, 1)}
 }
 
 func (m *mainView) Init() tea.Cmd {
-	cmds := []tea.Cmd{ticker(0), ticker(1), ticker(2)}
-	cmds = append(cmds, m.progress1.Init())
-	cmds = append(cmds, m.progress2.Init())
-	cmds = append(cmds, m.progress3.Init())
-
-	return tea.Batch(cmds...)
+	return nil
 }
 
 func (m *mainView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-
-	case component.ProgressMsg:
-
-		// бля короче проблема в том что прогресс возвращает нил если происходит инкрементация и если не происходит
-		m.progress1, _ = m.progress1.Update(msg)
-		if msg.Id == 0 {
-			if m.counter1 == 10 {
-				return m, nil
-			}
-			m.counter1++
-			return m, ticker(0)
+	case FuturesMsg:
+		if msg.err != nil {
+			m.steps[0].err = msg.err
+			return m, nil
 		}
-		m.progress2, _ = m.progress2.Update(msg)
-		if msg.Id == 1 {
-			if m.counter2 == 10 {
-				return m, nil
-			}
-			m.counter2++
-			return m, ticker(1)
-		}
-		m.progress3, _ = m.progress3.Update(msg)
-		if msg.Id == 2 {
-			if m.counter3 == 10 {
-				return m, nil
-			}
-			m.counter3++
-			return m, ticker(2)
-		}
-
-	case component.TickMsg:
-		var (
-			cmd  tea.Cmd
-			cmds []tea.Cmd
-		)
-
-		m.progress1, cmd = m.progress1.Update(msg)
-		cmds = append(cmds, cmd)
-		m.progress2, cmd = m.progress2.Update(msg)
-		cmds = append(cmds, cmd)
-		m.progress3, cmd = m.progress3.Update(msg)
-		cmds = append(cmds, cmd)
-
-		return m, tea.Batch(cmds...)
+		m.futures = msg.futures
+		m.steps[0].isLoading = false
+		return m, nil
 
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -102,6 +50,8 @@ func (m *mainView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, tea.Quit
 		}
 		switch msg.Type {
+		case tea.KeyEnter:
+			return m.handleEnter()
 		case tea.KeyCtrlC:
 			return m, tea.Quit
 		}
@@ -111,9 +61,75 @@ func (m *mainView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 }
 
 func (m *mainView) View() string {
-	return fmt.Sprintf("%s\n%s\n%s", m.progress1.View(), m.progress2.View(), m.progress3.View())
+	if !m.start {
+		return "Press [Enter] to start!"
+	} else {
+		if m.steps[0].err != nil {
+			return m.steps[0].err.Error()
+		}
+		if m.steps[0].isLoading {
+			return "Loading..."
+		}
+		if len(m.futures) > 0 {
+			var str string
+			for _, token := range m.futures {
+				str += fmt.Sprintf("Name: %s, Network: %s\n", token.Name, token.Network)
+			}
+			return str
+		}
+
+		return ""
+	}
 }
 
-func random(min float64, max float64) float64 {
-	return rand.Float64()*max - min + min
+func (m *mainView) handleEnter() (*mainView, tea.Cmd) {
+	if m.start {
+		return m, nil
+	}
+
+	m.start = true
+	// create first step
+	m.steps[0] = Step{isLoading: true}
+
+	return m, m.getFutures()
+}
+
+func (m *mainView) getFutures() tea.Cmd {
+	return func() tea.Msg {
+		// create mexcApi. TODO: create mexc api in the root, not there
+		ctx := context.Background()
+		api := api.NewMexcApi(m.cfg)
+		mexc := worker.NewMexcWorker(api, m.chainsService)
+
+		tokens, err := mexc.GetAllTokens(ctx)
+		if err != nil {
+			return FuturesMsg{futures: nil, err: fmt.Errorf("failed to fetch all tokens (Step #1) from Mexc exchange: %v", err)}
+		}
+
+		futures, err := mexc.GetAllFutures(ctx)
+		if err != nil {
+			return FuturesMsg{futures: nil, err: fmt.Errorf("failed to fetch futures (Step #2) from Mexc exchange: %v", err)}
+		}
+
+		var res []market.Token
+		for _, token := range tokens {
+			contract, ok := mexc.FindContractBySymbol(&futures, token.Coin)
+			if !ok {
+				// current token does not exist on futures
+				continue
+			}
+
+			res = append(res, market.Token{
+				Name:        token.Coin,
+				Decimal:     0, // unknown, will find it later
+				Network:     token.NetworkList[0].Network,
+				Address:     token.NetworkList[0].Contract, // TODO: NetworkList can contain > 1 elems
+				WithdrawFee: token.NetworkList[0].WithdrawFee,
+				Image_url:   contract.ImageUrl,
+				CreateTime:  contract.CreateTime,
+			})
+		}
+
+		return FuturesMsg{futures: res, err: nil}
+	}
 }

@@ -7,14 +7,13 @@ import (
 	"strings"
 
 	component "github.com/Lazy-Parser/TUI/internal/tui/components"
-	"github.com/Lazy-Parser/TUI/internal/tui/theme"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/shirou/gopsutil/v4/cpu"
 )
 
-var ()
+// TODO: Very important!!! This page updates always. So when other page selected, it update ticker and make update all layout and selected page too. Solve it, to not rerender when not selected.
 
 type modelHeader struct {
 	cpuInfo  []cpu.InfoStat
@@ -46,7 +45,7 @@ func (m modelHeader) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m modelHeader) View() string {
 	left := lipgloss.NewStyle().
 		Align(lipgloss.Left).
-		Foreground(theme.MintColor).
+		Foreground(lipgloss.Color("#000")). // theme.MintColor
 		Bold(true).
 		Render(m.logo)
 
@@ -67,15 +66,15 @@ func (m modelHeader) View() string {
 }
 
 func newHeader() *modelHeader {
-	logo := `__/\\\\\\\\\\\\\\\__/\\\________/\\\__/\\\\\\\\\\\_
- _\///////\\\/////__\/\\\_______\/\\\_\/////\\\///__
-  _______\/\\\_______\/\\\_______\/\\\_____\/\\\_____
-   _______\/\\\_______\/\\\_______\/\\\_____\/\\\_____
-    _______\/\\\_______\/\\\_______\/\\\_____\/\\\_____
-     _______\/\\\_______\/\\\_______\/\\\_____\/\\\_____
-      _______\/\\\_______\//\\\______/\\\______\/\\\_____
-       _______\/\\\________\///\\\\\\\\\/____/\\\\\\\\\\\_
-        _______\///___________\/////////_____\///////////__`
+	logo := `
+   █████████   ███████████   █████   ████ █████   █████   █████████   ██████   ██████
+  ███░░░░░███ ░░███░░░░░███ ░░███   ███░ ░░███   ░░███   ███░░░░░███ ░░██████ ██████
+ ░███    ░███  ░███    ░███  ░███  ███    ░███    ░███  ░███    ░███  ░███░█████░███
+ ░███████████  ░██████████   ░███████     ░███████████  ░███████████  ░███░░███ ░███
+ ░███░░░░░███  ░███░░░░░███  ░███░░███    ░███░░░░░███  ░███░░░░░███  ░███ ░░░  ░███
+ ░███    ░███  ░███    ░███  ░███ ░░███   ░███    ░███  ░███    ░███  ░███      ░███
+ █████   █████ █████   █████ █████ ░░████ █████   █████ █████   █████ █████     █████
+░░░░░   ░░░░░ ░░░░░   ░░░░░ ░░░░░   ░░░░ ░░░░░   ░░░░░ ░░░░░   ░░░░░ ░░░░░     ░░░░░`
 
 	cpuInfo, err := cpu.Info()
 	if err != nil {

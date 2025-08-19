@@ -1,13 +1,15 @@
 package page_generator
 
 import (
+	"github.com/Lazy-Parser/Collector/chains"
+	"github.com/Lazy-Parser/Collector/config"
 	"github.com/Lazy-Parser/TUI/internal/tui/pages"
 )
 
-func NewPage() *pages.Page {
+func NewPage(cfg *config.Config, chainsService *chains.Chains) *pages.Page {
 	return &pages.Page{
-		Header: NewHeader(),
-		Main:   NewMain(),
+		Header: NewHeader(cfg),
+		Main:   NewMain(cfg, chainsService),
 		Footer: NewFooter(),
 	}
 }

@@ -1,6 +1,8 @@
 package tui
 
 import (
+	"github.com/Lazy-Parser/Collector/chains"
+	"github.com/Lazy-Parser/Collector/config"
 	"github.com/Lazy-Parser/Collector/market"
 	"github.com/Lazy-Parser/TUI/internal/tui/command"
 	"github.com/Lazy-Parser/TUI/internal/tui/pages"
@@ -11,6 +13,26 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
+
+// TODO
+// internal/tui/
+// ├── managers/           # Resource and state managers
+// │   ├── resource.go
+// │   └── page.go
+// ├── handlers/           # Specialized message handlers
+// │   ├── common.go
+// │   └── navigation.go
+// ├── events/             # Event system
+// │   └── bus.go
+// ├── components/         # Reusable UI components
+// └── pages/              # Page implementations
+//
+// Architecture Recommendations
+// Use Delegation: Let your main model delegate to specialized handlers
+// Implement Interfaces: Allow components to opt into behaviors
+// Centralize State: Create a single source of truth for application data
+// Add Event System: Use pub/sub for loose coupling between components
+// Error Boundaries: Handle errors at appropriate levels
 
 var (
 	skyBlue = lipgloss.Color("#4A90E2")
@@ -33,7 +55,7 @@ func (m model) Init() tea.Cmd {
 	return m.pageService.Init(0)
 }
 
-func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
@@ -106,7 +128,6 @@ func (m model) View() string {
 	var header string
 	if m.showHeader {
 		header = lipgloss.NewStyle().
-			Align(lipgloss.Center).
 			Border(lipgloss.NormalBorder(), true).
 			BorderForeground(skyBlue).
 			Width(m.width).
@@ -149,14 +170,14 @@ func joinComponents(header, content, footer string, model model) string {
 	return lipgloss.JoinVertical(lipgloss.Top, header, content, footer)
 }
 
-func InitLayout(tokenRepo market.TokenRepo) tea.Model {
+func InitLayout(tokenRepo market.TokenRepo, cfg *config.Config, chainsService *chains.Chains) tea.Model {
 	payload := []*pages.PageOption{
 		pages.NewPageOption(page_default.NewPageDefault()),
 		pages.NewPageOption(page_viewer.NewPage(tokenRepo)),
-		pages.NewPageOption(page_generator.NewPage()),
+		pages.NewPageOption(page_generator.NewPage(cfg, chainsService)),
 	}
 
-	return model{
+	return &model{
 		pageService:  pages.NewPageService(payload),
 		showHeader:   true,
 		showFooter:   true,

@@ -6,12 +6,14 @@ import (
 	"log"
 	"time"
 
+	"github.com/Lazy-Parser/Collector/chains"
+	"github.com/Lazy-Parser/Collector/config"
 	"github.com/Lazy-Parser/Collector/market"
 
 	tea "github.com/charmbracelet/bubbletea"
 )
 
-func Run(tokenRepo market.TokenRepo) error {
+func Run(tokenRepo market.TokenRepo, cfg *config.Config, chainsService *chains.Chains) error {
 	f := StartLogger()
 
 	// try to create test tokens
@@ -45,14 +47,14 @@ func Run(tokenRepo market.TokenRepo) error {
 			Network:     "BSC",
 		},
 	}
-	
+
 	for _, token := range tokens {
 		if err := tokenRepo.Save(ctx, token); err != nil {
 			log.Println(err)
 		}
 	}
 
-	p := tea.NewProgram(InitLayout(tokenRepo), tea.WithAltScreen())
+	p := tea.NewProgram(InitLayout(tokenRepo, cfg, chainsService), tea.WithAltScreen())
 	if _, err := p.Run(); err != nil {
 		f.Close()
 		return fmt.Errorf("Alas, there's been an error: %v", err)
