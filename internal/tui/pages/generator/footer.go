@@ -1,6 +1,8 @@
 package page_generator
 
-import tea "github.com/charmbracelet/bubbletea"
+import (
+	tea "github.com/charmbracelet/bubbletea"
+)
 
 type footer struct {
 	stepList *StepList

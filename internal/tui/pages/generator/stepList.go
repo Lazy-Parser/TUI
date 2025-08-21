@@ -85,9 +85,9 @@ func (pg *StepList) View() string {
 	// ⏳ ✅ ❗
 	var str string
 
-	for i, step := range pg.steps {
+	for _, step := range pg.steps {
 		log.Printf("Title: %s", step.title)
-		str += fmt.Sprintf("%d. %s :", i+1, step.title)
+		str += fmt.Sprintf("• %s:", step.title)
 
 		if step.isStepLoading() {
 			str += "\tLoading"

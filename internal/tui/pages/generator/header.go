@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/Lazy-Parser/Collector/config"
+	component "github.com/Lazy-Parser/TUI/internal/tui/components"
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
@@ -31,5 +32,10 @@ func (h *header) View() string {
 	str += "\n"
 	str += fmt.Sprintf("Coingecko: %s (watch limits / usage on https://www.coingecko.com/developers/dashboard)", makeBold(h.cfg.Coingecko.API.KEY))
 
-	return lipgloss.NewStyle().Align(lipgloss.Left).Render(str)
+	title := map[component.BorderPosition]string{
+		component.TopLeftBorder:     "Title",
+		component.BottomRightBorder: "Timer",
+	}
+
+	return component.Borderize(lipgloss.NewStyle().Align(lipgloss.Left).Render(str), true, title)
 }
