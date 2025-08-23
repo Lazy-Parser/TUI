@@ -16,7 +16,7 @@ func main() {
 	wd, _ := os.Getwd()
 	path := filepath.Join(wd, "storage", "storage.db")
 
-	db, err := database.Start(path)
+	db, err := database.Start(path, database.WithAutoMigrate())
 	if err != nil {
 		panic(err)
 	}

@@ -12,7 +12,7 @@ require (
 )
 
 // /Users/vladislavroshko/Documents/Cleopatra/core
-replace github.com/Lazy-Parser/Collector => /Users/mac/Documents/Cleopatra/core // /home/hades/Documents/Cleopatra/core/
+replace github.com/Lazy-Parser/Collector => /home/hades/Documents/Cleopatra/core/ // /Users/mac/Documents/Cleopatra/core
 
 require (
 	github.com/atotto/clipboard v0.1.4 // indirect

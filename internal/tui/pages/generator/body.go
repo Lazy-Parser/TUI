@@ -1,48 +1,52 @@
 package page_generator
 
 import (
-	"context"
-	"fmt"
-
-	"github.com/Lazy-Parser/Collector/api"
 	"github.com/Lazy-Parser/Collector/chains"
 	"github.com/Lazy-Parser/Collector/config"
 	"github.com/Lazy-Parser/Collector/market"
-	"github.com/Lazy-Parser/Collector/worker"
+	component "github.com/Lazy-Parser/TUI/internal/tui/components"
 	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/lipgloss"
 )
-type FuturesMsg struct {
-	futures []market.Token
-	err     error
-}
+
+type FuturesMsg struct { futures []market.Token; err error }
+type DexscreenerMsg struct { pairs []market.Pair; err error }
+type DecimalsMsg struct { futures []market.Token; err error }
 
 type mainView struct {
-	cfg           *config.Config
-	chainsService *chains.Chains
-	start         bool
-	futures       []market.Token
-	steps         []Step
+	logic    *logic
+	start    bool
+	futures  []market.Token
+	pairs []market.Pair
+	taskFlow *component.TaskFlow
 }
 
 func NewMain(cfg *config.Config, chainsService *chains.Chains) tea.Model {
-	return &mainView{cfg: cfg, chainsService: chainsService, steps: make([]Step, 1)}
+	return &mainView{
+		logic: newLogic(cfg, chainsService),
+		taskFlow: component.NewTaskFlow(
+			component.NewTask("Fetch futures from Mexc", ""),
+			component.NewTask("Fetch Pairs from DS ", ""),
+			// component.NewTask("Fetch decimals from CG", ""),
+		),
+	}
 }
 
 func (m *mainView) Init() tea.Cmd {
-	return nil
+	return m.taskFlow.Init()
 }
 
 func (m *mainView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case FuturesMsg:
-		if msg.err != nil {
-			m.steps[0].err = msg.err
-			return m, nil
-		}
-		m.futures = msg.futures
-		m.steps[0].isLoading = false
-		return m, nil
+		return m.handleFuturesMsg(msg)
 
+	case DexscreenerMsg:
+		return m.handleDsMsg(msg)
+		
+	case component.TaskEndMsg:
+		return m.handleTasksEnd()
+		
 	case tea.KeyMsg:
 		switch msg.String() {
 		// exit
@@ -57,79 +61,16 @@ func (m *mainView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 	}
 
-	return m, nil
+	var cmd tea.Cmd
+	m.taskFlow, cmd = m.taskFlow.Update(msg)
+
+	return m, cmd
 }
 
 func (m *mainView) View() string {
 	if !m.start {
 		return "Press [Enter] to start!"
 	} else {
-		if m.steps[0].err != nil {
-			return m.steps[0].err.Error()
-		}
-		if m.steps[0].isLoading {
-			return "Loading..."
-		}
-		if len(m.futures) > 0 {
-			var str string
-			for _, token := range m.futures {
-				str += fmt.Sprintf("Name: %s, Network: %s\n", token.Name, token.Network)
-			}
-			return str
-		}
-
-		return ""
-	}
-}
-
-func (m *mainView) handleEnter() (*mainView, tea.Cmd) {
-	if m.start {
-		return m, nil
-	}
-
-	m.start = true
-	// create first step
-	m.steps[0] = Step{isLoading: true}
-
-	return m, m.getFutures()
-}
-
-func (m *mainView) getFutures() tea.Cmd {
-	return func() tea.Msg {
-		// create mexcApi. TODO: create mexc api in the root, not there
-		ctx := context.Background()
-		api := api.NewMexcApi(m.cfg)
-		mexc := worker.NewMexcWorker(api, m.chainsService)
-
-		tokens, err := mexc.GetAllTokens(ctx)
-		if err != nil {
-			return FuturesMsg{futures: nil, err: fmt.Errorf("failed to fetch all tokens (Step #1) from Mexc exchange: %v", err)}
-		}
-
-		futures, err := mexc.GetAllFutures(ctx)
-		if err != nil {
-			return FuturesMsg{futures: nil, err: fmt.Errorf("failed to fetch futures (Step #2) from Mexc exchange: %v", err)}
-		}
-
-		var res []market.Token
-		for _, token := range tokens {
-			contract, ok := mexc.FindContractBySymbol(&futures, token.Coin)
-			if !ok {
-				// current token does not exist on futures
-				continue
-			}
-
-			res = append(res, market.Token{
-				Name:        token.Coin,
-				Decimal:     0, // unknown, will find it later
-				Network:     token.NetworkList[0].Network,
-				Address:     token.NetworkList[0].Contract, // TODO: NetworkList can contain > 1 elems
-				WithdrawFee: token.NetworkList[0].WithdrawFee,
-				Image_url:   contract.ImageUrl,
-				CreateTime:  contract.CreateTime,
-			})
-		}
-
-		return FuturesMsg{futures: res, err: nil}
+		return lipgloss.NewStyle().Align(lipgloss.Left).Render(m.taskFlow.View())
 	}
 }
