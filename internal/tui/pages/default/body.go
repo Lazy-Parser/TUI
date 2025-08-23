@@ -29,6 +29,7 @@ type modelBody struct {
 func newBody() modelBody {
 	return modelBody{
 		options: []option{
+			{title: "Starter", description: "Do not know what to do? Click here!"},
 			{title: "Generate", description: "Create pairs and tokens from MEXC / Dexscreener"},
 			{title: "Listen prices", description: "Make money button 💸"},
 			{title: "View database", description: "View generated pairs and tokens"},
@@ -75,16 +76,18 @@ func (m modelBody) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case tea.KeyEnter:
 			switch m.selected {
 			case 0:
-				return m, SelectPage("Generator")
+				return m, SelectPage("Guide")
 			case 1:
-				// Listen prices
+				return m, SelectPage("Generator")
 			case 2:
+				// Listen prices
+			case 3:
 				// View database
 				return m, SelectPage("Database")
-			case 3:
+			case 4:
 				// View logs
 				return m, OpenNewTerminal()
-			case 4:
+			case 5:
 				// Exit
 				log.Println("sdfjkldhjkfjgsh")
 				cmd := command.OnQuit()

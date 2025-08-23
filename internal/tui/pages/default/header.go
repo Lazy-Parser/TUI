@@ -14,7 +14,7 @@ import (
 )
 
 // TODO: Very important!!! This page updates always. So when other page selected, it update ticker and make update all layout and selected page too. Solve it, to not rerender when not selected.
-
+// TODO: when i will make the server, this app will be like an admin panel. Here, in header, i want to add a string like "Server health check: Running"
 type modelHeader struct {
 	cpuInfo  []cpu.InfoStat
 	os       string
