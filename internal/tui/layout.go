@@ -8,6 +8,7 @@ import (
 	"github.com/Lazy-Parser/TUI/internal/tui/pages"
 	page_default "github.com/Lazy-Parser/TUI/internal/tui/pages/default"
 	page_generator "github.com/Lazy-Parser/TUI/internal/tui/pages/generator"
+	page_guide "github.com/Lazy-Parser/TUI/internal/tui/pages/guide"
 	page_viewer "github.com/Lazy-Parser/TUI/internal/tui/pages/viewer"
 
 	tea "github.com/charmbracelet/bubbletea"
@@ -101,12 +102,16 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case page_default.PageSelected:
 		switch msg.Title {
-		case "Database":
+		case "Guide":
 			cmd := m.pageService.SetCurrentPage(1)
+			return m, cmd
+			
+		case "Database":
+			cmd := m.pageService.SetCurrentPage(2)
 			return m, cmd
 
 		case "Generator":
-			cmd := m.pageService.SetCurrentPage(2)
+			cmd := m.pageService.SetCurrentPage(3)
 			return m, cmd
 		}
 
@@ -173,6 +178,7 @@ func joinComponents(header, content, footer string, model model) string {
 func InitLayout(tokenRepo market.TokenRepo, cfg *config.Config, chainsService *chains.Chains) tea.Model {
 	payload := []*pages.PageOption{
 		pages.NewPageOption(page_default.NewPageDefault()),
+		pages.NewPageOption(page_guide.NewPage()),
 		pages.NewPageOption(page_viewer.NewPage(tokenRepo)),
 		pages.NewPageOption(page_generator.NewPage(cfg, chainsService)),
 	}
