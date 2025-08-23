@@ -109,7 +109,7 @@ func (ct Table) setRows(tokens []market.Token) table.Model {
 		rowData := table.RowData{
 			"name":      token.Name,
 			"network":   token.Network,
-			"decimal":   token.Network,
+			"decimal":   token.Decimal,
 			"address":   token.Address,
 			"createdAt": milliToDate(token.CreateTime),
 			"fee":       token.WithdrawFee,
@@ -118,8 +118,8 @@ func (ct Table) setRows(tokens []market.Token) table.Model {
 		rows = append(rows, table.NewRow(rowData))
 	}
 
-	ct.table.WithRows(rows)
-	return ct.table
+	newTable := ct.table.WithRows(rows)
+	return newTable
 }
 
 func milliToDate(milliseconds int64) string {
