@@ -17,7 +17,7 @@ func main() {
 		panic(err)
 	}
 
-	path := filepath.Join(wd, "internal", "tui", "components", "pages")
+	path := filepath.Join(wd, "internal", "tui", "pages")
 	name := flag.String("name", "", "page name (e.g. users)")
 	root := flag.String("root", path, "pages root")
 	pkg := flag.String("pkg", "pages", "import path alias for pages package (if needed)")
@@ -78,7 +78,7 @@ func renderToFile(path, tpl string, data any) error {
 const pageTpl = `package page_{{.PageName}}
 
 import (
-	"tui/internal/tui/components/pages"
+	"github.com/Lazy-Parser/TUI/internal/tui/pages"
 )
 
 func NewPage() *pages.Page {
