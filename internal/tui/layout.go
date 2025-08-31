@@ -1,9 +1,7 @@
 package tui
 
 import (
-	"github.com/Lazy-Parser/Collector/chains"
-	"github.com/Lazy-Parser/Collector/config"
-	"github.com/Lazy-Parser/Collector/market"
+	"github.com/Lazy-Parser/TUI/internal/task"
 	"github.com/Lazy-Parser/TUI/internal/tui/command"
 	"github.com/Lazy-Parser/TUI/internal/tui/pages"
 	page_default "github.com/Lazy-Parser/TUI/internal/tui/pages/default"
@@ -16,6 +14,7 @@ import (
 )
 
 // TODO
+// ! Think about the system, that will calculate the size of each component (header, main, footer), and this value will dinamicly change when open / close, for example, header
 // internal/tui/
 // ├── managers/           # Resource and state managers
 // │   ├── resource.go
@@ -49,9 +48,10 @@ type model struct {
 	widthOffset  int
 
 	pageService *pages.PageService
+	taskManager *task.TaskManager
 }
 
-func (m model) Init() tea.Cmd {
+func (m *model) Init() tea.Cmd {
 	// select the first page (which is the default)
 	return m.pageService.Init(0)
 }
@@ -66,21 +66,9 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, command.OnQuit()
 
 		case "1":
-			if m.showHeader {
-				m.showHeader = false
-				m.heightOffset -= 1
-			} else {
-				m.showHeader = true
-				m.heightOffset += 1
-			}
+			m.handleToggleHeader()
 		case "2":
-			if m.showFooter {
-				m.showFooter = false
-				m.heightOffset -= 1
-			} else {
-				m.showFooter = true
-				m.heightOffset += 1
-			}
+			m.handleToggleFooter()
 		}
 
 		switch msg.Type {
@@ -105,7 +93,7 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		case "Guide":
 			cmd := m.pageService.SetCurrentPage(1)
 			return m, cmd
-			
+
 		case "Database":
 			cmd := m.pageService.SetCurrentPage(2)
 			return m, cmd
@@ -117,19 +105,15 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	}
 
-	// after layout updates, update selected page
+	// update selected page
 	cmd := m.pageService.Update(m.pageService.CurrentPageIdx(), msg)
 
-	if m.pageService.CurrentPageIdx() != 0 {
-		// and update default page, because it contains timer
-		oneMoreCmd := m.pageService.Update(0, msg)
-		cmd = tea.Batch(cmd, oneMoreCmd)
-	}
+	m.taskManager.ConsumeMsg(msg)
 
 	return m, cmd
 }
 
-func (m model) View() string {
+func (m *model) View() string {
 	var header string
 	if m.showHeader {
 		header = lipgloss.NewStyle().
@@ -161,7 +145,7 @@ func (m model) View() string {
 	return joinComponents(header, content, footer, m)
 }
 
-func joinComponents(header, content, footer string, model model) string {
+func joinComponents(header, content, footer string, model *model) string {
 	if !model.showFooter {
 		return lipgloss.JoinVertical(lipgloss.Top, header, content)
 	}
@@ -175,12 +159,12 @@ func joinComponents(header, content, footer string, model model) string {
 	return lipgloss.JoinVertical(lipgloss.Top, header, content, footer)
 }
 
-func InitLayout(tokenRepo market.TokenRepo, cfg *config.Config, chainsService *chains.Chains) tea.Model {
+func InitLayout(taskManager *task.TaskManager) tea.Model {
 	payload := []*pages.PageOption{
 		pages.NewPageOption(page_default.NewPageDefault()),
 		pages.NewPageOption(page_guide.NewPage()),
-		pages.NewPageOption(page_viewer.NewPage(tokenRepo)),
-		pages.NewPageOption(page_generator.NewPage(cfg, chainsService)),
+		pages.NewPageOption(page_viewer.NewPage()),
+		pages.NewPageOption(page_generator.NewPage()),
 	}
 
 	return &model{
@@ -188,5 +172,27 @@ func InitLayout(tokenRepo market.TokenRepo, cfg *config.Config, chainsService *c
 		showHeader:   true,
 		showFooter:   true,
 		heightOffset: 2,
+		taskManager:  taskManager,
+	}
+}
+
+// methods
+func (m *model) handleToggleHeader() {
+	if m.showHeader {
+		m.showHeader = false
+		m.heightOffset -= 1
+	} else {
+		m.showHeader = true
+		m.heightOffset += 1
+	}
+}
+
+func (m *model) handleToggleFooter() {
+	if m.showFooter {
+		m.showFooter = false
+		m.heightOffset -= 1
+	} else {
+		m.showFooter = true
+		m.heightOffset += 1
 	}
 }
