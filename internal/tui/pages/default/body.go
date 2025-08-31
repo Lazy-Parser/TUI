@@ -26,8 +26,8 @@ type modelBody struct {
 	selected int
 }
 
-func newBody() modelBody {
-	return modelBody{
+func newBody() *modelBody {
+	return &modelBody{
 		options: []option{
 			{title: "Starter", description: "Do not know what to do? Click here!"},
 			{title: "Generate", description: "Create pairs and tokens from MEXC / Dexscreener"},
@@ -39,11 +39,11 @@ func newBody() modelBody {
 	}
 }
 
-func (m modelBody) Init() tea.Cmd {
+func (m *modelBody) Init() tea.Cmd {
 	return nil
 }
 
-func (m modelBody) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (m *modelBody) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 
 	case tea.KeyMsg:
@@ -89,7 +89,7 @@ func (m modelBody) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, OpenNewTerminal()
 			case 5:
 				// Exit
-				log.Println("sdfjkldhjkfjgsh")
+				log.Println("Cleaning logs...")
 				cmd := command.OnQuit()
 				return m, cmd
 			}
@@ -100,7 +100,7 @@ func (m modelBody) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-func (m modelBody) View() string {
+func (m *modelBody) View() string {
 	var strBuilder strings.Builder
 	for i, option := range m.options {
 		cursor := cursorEmpty
