@@ -1,137 +1,142 @@
 package page_generator
 
-import (
-	"context"
-	"fmt"
-	"log"
+// type logic struct {
+// 	cfg           *config.Config
+// 	chainsService *chains.Chains
+// }
 
-	"github.com/Lazy-Parser/Collector/api"
-	"github.com/Lazy-Parser/Collector/chains"
-	"github.com/Lazy-Parser/Collector/config"
-	"github.com/Lazy-Parser/Collector/market"
-	"github.com/Lazy-Parser/Collector/worker"
-	tea "github.com/charmbracelet/bubbletea"
-)
+// func newLogic(cfg *config.Config, chainsService *chains.Chains) *logic {
+// 	return &logic{
+// 		cfg:           cfg,
+// 		chainsService: chainsService,
+// 	}
+// }
 
-type logic struct {
-	cfg           *config.Config
-	chainsService *chains.Chains
-}
+// // FUTURES
+// // GetFutures fetches tokens and futures from Mexc
+// func (l *logic) GetFutures() tea.Cmd {
+// 	return func() tea.Msg {
+// 		ctx := context.Background()
 
-func newLogic(cfg *config.Config, chainsService *chains.Chains) *logic {
-	return &logic{
-		cfg:           cfg,
-		chainsService: chainsService,
-	}
-}
+// 		// Initialize services
+// 		api := api.NewMexcApi(l.cfg)
+// 		mexc := worker.NewMexcWorker(api, l.chainsService)
 
-// FUTURES
-// GetFutures fetches tokens and futures from Mexc
-func (l *logic) GetFutures() tea.Cmd {
-	return func() tea.Msg {
-		ctx := context.Background()
+// 		// Fetch data
+// 		tokens, err := l.fetchTokens(ctx, mexc)
+// 		if err != nil {
+// 			return FuturesMsg{futures: nil, err: err}
+// 		}
 
-		// Initialize services
-		api := api.NewMexcApi(l.cfg)
-		mexc := worker.NewMexcWorker(api, l.chainsService)
+// 		futures, err := l.fetchFutures(ctx, mexc)
+// 		if err != nil {
+// 			return FuturesMsg{futures: nil, err: err}
+// 		}
 
-		// Fetch data
-		tokens, err := l.fetchTokens(ctx, mexc)
-		if err != nil {
-			return FuturesMsg{futures: nil, err: err}
-		}
+// 		// Process and combine data
+// 		result := l.combineTokensWithFutures(tokens, futures, mexc)
 
-		futures, err := l.fetchFutures(ctx, mexc)
-		if err != nil {
-			return FuturesMsg{futures: nil, err: err}
-		}
+// 		return FuturesMsg{futures: result, err: nil}
+// 	}
+// }
 
-		// Process and combine data
-		result := l.combineTokensWithFutures(tokens, futures, mexc)
+// // fetchTokens gets all tokens from Mexc
+// func (l *logic) fetchTokens(ctx context.Context, mexc worker.MexcWorker) ([]market.MexcAsset, error) {
+// 	tokens, err := mexc.GetAllTokens(ctx)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to fetch tokens from Mexc: %v", err)
+// 	}
+// 	return tokens, nil
+// }
 
-		return FuturesMsg{futures: result, err: nil}
-	}
-}
+// // fetchFutures gets all futures from Mexc
+// func (l *logic) fetchFutures(ctx context.Context, mexc worker.MexcWorker) ([]market.MexcContractDetail, error) {
+// 	futures, err := mexc.GetAllFutures(ctx)
+// 	if err != nil {
+// 		return nil, fmt.Errorf("failed to fetch futures from Mexc: %v", err)
+// 	}
+// 	return futures, nil
+// }
 
-// fetchTokens gets all tokens from Mexc
-func (l *logic) fetchTokens(ctx context.Context, mexc worker.MexcWorker) ([]market.MexcAsset, error) {
-	tokens, err := mexc.GetAllTokens(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch tokens from Mexc: %v", err)
-	}
-	return tokens, nil
-}
+// // combineTokensWithFutures processes tokens and matches them with futures
+// func (l *logic) combineTokensWithFutures(
+// 	tokens []market.MexcAsset,
+// 	futures []market.MexcContractDetail,
+// 	mexc worker.MexcWorker,
+// ) []market.Token {
+// 	var result []market.Token
 
-// fetchFutures gets all futures from Mexc
-func (l *logic) fetchFutures(ctx context.Context, mexc worker.MexcWorker) ([]market.MexcContractDetail, error) {
-	futures, err := mexc.GetAllFutures(ctx)
-	if err != nil {
-		return nil, fmt.Errorf("failed to fetch futures from Mexc: %v", err)
-	}
-	return futures, nil
-}
+// 	for _, token := range tokens {
+// 		// Find matching contract
+// 		contract, ok := mexc.FindContractBySymbol(&futures, token.Coin)
+// 		if !ok {
+// 			// Skip tokens without futures
+// 			continue
+// 		}
 
-// combineTokensWithFutures processes tokens and matches them with futures
-func (l *logic) combineTokensWithFutures(
-	tokens []market.MexcAsset,
-	futures []market.MexcContractDetail,
-	mexc worker.MexcWorker,
-) []market.Token {
-	var result []market.Token
+// 		// Create market token
+// 		marketToken := l.createMarketToken(token, contract)
+// 		result = append(result, marketToken)
+// 	}
 
-	for _, token := range tokens {
-		// Find matching contract
-		contract, ok := mexc.FindContractBySymbol(&futures, token.Coin)
-		if !ok {
-			// Skip tokens without futures
-			continue
-		}
+// 	return result
+// }
 
-		// Create market token
-		marketToken := l.createMarketToken(token, contract)
-		result = append(result, marketToken)
-	}
+// // createMarketToken converts API data to market.Token
+// func (l *logic) createMarketToken(token market.MexcAsset, contract market.MexcContractDetail) market.Token {
+// 	return market.Token{
+// 		Name:        token.Coin,
+// 		Decimal:     0, // Will be filled later
+// 		Network:     token.NetworkList[0].Network,
+// 		Address:     token.NetworkList[0].Contract,
+// 		WithdrawFee: token.NetworkList[0].WithdrawFee,
+// 		Image_url:   contract.ImageUrl,
+// 		CreateTime:  contract.CreateTime,
+// 	}
+// }
 
-	return result
-}
+// // ---- PAIRS ----
+// func (l *logic) GetPairs(tokens []market.Token) tea.Cmd {
+// 	return func() tea.Msg {
+// 		// create instance first
+// 		dsApi := api.NewDexscreenerApi(l.cfg)
+// 		dsWorker := worker.NewDexscreenerWorker(dsApi, l.chainsService)
 
-// createMarketToken converts API data to market.Token
-func (l *logic) createMarketToken(token market.MexcAsset, contract market.MexcContractDetail) market.Token {
-	return market.Token{
-		Name:        token.Coin,
-		Decimal:     0, // Will be filled later
-		Network:     token.NetworkList[0].Network,
-		Address:     token.NetworkList[0].Contract,
-		WithdrawFee: token.NetworkList[0].WithdrawFee,
-		Image_url:   contract.ImageUrl,
-		CreateTime:  contract.CreateTime,
-	}
-}
+// 		ctx := context.Background()
+// 		pairs := make([]market.Pair, 0, len(tokens))
+// 		emptyPair := market.Pair{}
+// 		for _, token := range tokens {
+// 			if len(pairs) == 10 {
+// 				break
+// 			}
 
-// ---- PAIRS ----
-func (l *logic) GetPairs(tokens []market.Token) tea.Cmd {
-	return func() tea.Msg {
-		// create instance first
-		dsApi := api.NewDexscreenerApi(l.cfg)
-		dsWorker := worker.NewDexscreenerWorker(dsApi, l.chainsService)
+// 			// quote tokens on mexc does not have address
+// 			if token.Address == "" {
+// 				continue
+// 			}
 
-		ctx := context.Background()
-		pairs := make([]market.Pair, len(tokens))
-		emptyPair := market.Pair{}
-		for _, token := range tokens {
-			pair, err := dsWorker.FetchPairByToken(ctx, token)
-			if err != nil {
-				log.Println(err)
-				continue
-			}
-			if pair == emptyPair {
-				// couldnot find pair for provided token
-				continue
-			}
+// 			pair, err := dsWorker.FetchPairByToken(ctx, token)
+// 			if err != nil {
+// 				log.Println(err)
+// 				continue
+// 			}
+// 			if pair == emptyPair {
+// 				// couldnot find pair for provided token
+// 				continue
+// 			}
 
-			pairs = append(pairs, pair)
-		}
+// 			pairs = append(pairs, pair)
+// 		}
 
-		return DexscreenerMsg{pairs: pairs, err: nil}
-	}
-}
+// 		return DexscreenerMsg{pairs: pairs, err: nil}
+// 	}
+// }
+
+// func (l *logic) IsTokenInPairs(token market.Token, pairs *[]market.Pair) bool {
+// 	for _, pair := range *pairs {
+// 		if pair.BaseToken.Address == token.Address || pair.QuoteToken.Address == token.Address {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
