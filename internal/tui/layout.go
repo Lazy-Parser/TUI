@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"github.com/Lazy-Parser/TUI/internal/service"
 	"github.com/Lazy-Parser/TUI/internal/task"
 	"github.com/Lazy-Parser/TUI/internal/tui/command"
 	"github.com/Lazy-Parser/TUI/internal/tui/pages"
@@ -49,6 +50,7 @@ type model struct {
 
 	pageService *pages.PageService
 	taskManager *task.TaskManager
+	service     *service.Service
 }
 
 func (m *model) Init() tea.Cmd {
@@ -108,7 +110,8 @@ func (m *model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	// update selected page
 	cmd := m.pageService.Update(m.pageService.CurrentPageIdx(), msg)
 
-	m.taskManager.ConsumeMsg(msg)
+	m.taskManager.HandleMsg(msg)
+	m.service.HandleMsg(msg)
 
 	return m, cmd
 }
@@ -159,7 +162,7 @@ func joinComponents(header, content, footer string, model *model) string {
 	return lipgloss.JoinVertical(lipgloss.Top, header, content, footer)
 }
 
-func InitLayout(taskManager *task.TaskManager) tea.Model {
+func InitLayout(taskManager *task.TaskManager, service *service.Service) tea.Model {
 	payload := []*pages.PageOption{
 		pages.NewPageOption(page_default.NewPageDefault()),
 		pages.NewPageOption(page_guide.NewPage()),
@@ -173,6 +176,7 @@ func InitLayout(taskManager *task.TaskManager) tea.Model {
 		showFooter:   true,
 		heightOffset: 2,
 		taskManager:  taskManager,
+		service:      service,
 	}
 }
 
