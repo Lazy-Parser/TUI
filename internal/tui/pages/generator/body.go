@@ -1,8 +1,6 @@
 package page_generator
 
 import (
-	"fmt"
-
 	tea "github.com/charmbracelet/bubbletea"
 )
 
@@ -27,16 +25,10 @@ type mainView struct {
 }
 
 func NewMain() tea.Model {
-	modelSelection := NewSelection(
-		NewOption("Mexc", "Mexc"),
-		NewOption("Bitget", "Bitget"),
-		NewOption("Kukoin", "Kukoin"),
-		NewOption("Gate.io", "Gate.io"),
-	)
 	return &mainView{
 		mode: ModeSelection,
 		modeModels: map[Mode]tea.Model{
-			ModeSelection:  modelSelection,
+			ModeSelection:  NewSelection(),
 			ModeAddPool:    NewAddPool(),
 			ModeGeneration: NewGenetationMode(),
 		},
@@ -44,7 +36,9 @@ func NewMain() tea.Model {
 }
 
 func (model *mainView) Init() tea.Cmd {
-	return nil
+	// init selection mode, because it opens first. Init other modes, only when are open!
+
+	return model.modeModels[model.mode].Init()
 }
 
 func (model *mainView) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -88,7 +82,8 @@ func (m *mainView) handleSelectionSubmit(msg SelectionModeSubmitMsg) (tea.Model,
 	for _, exchange := range msg.Elems {
 		str += exchange + " | "
 	}
-	m.getGenerationMode().Info = str
+	m.getGenerationMode().Address = ""
+	m.getGenerationMode().Network = ""
 
 	return m, nil
 }
@@ -99,9 +94,12 @@ func (m *mainView) handleSelectionMsg() (tea.Model, tea.Cmd) {
 
 func (m *mainView) handleAddPoolSubmit(msg AddPoolModeSubmitMsg) (tea.Model, tea.Cmd) {
 	m.mode = ModeGeneration
-	m.getGenerationMode().Info = fmt.Sprintf("Network: %s\nAddress: %s", msg.Network, msg.Address)
+	m.getGenerationMode().Set(msg.Address, msg.Network)
 
-	return m, nil
+	// also do not forget to Init() this model to start generation process!
+	cmd := m.getGenerationMode().Init()
+
+	return m, cmd
 }
 func (m *mainView) handleAddPoolMsg() (tea.Model, tea.Cmd) {
 	m.mode = ModeAddPool
