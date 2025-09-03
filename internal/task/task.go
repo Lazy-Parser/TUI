@@ -6,6 +6,11 @@ import (
 	tea "github.com/charmbracelet/bubbletea"
 )
 
+// требования для задач
+// время выполнения задачи
+// задача выполнена / выполняеться / ошибка
+//
+
 type Tasker interface {
 	ID() int
 	Title() string
@@ -18,46 +23,45 @@ type Tasker interface {
 	// Status() - running / error / done
 }
 
-type Task[T any] struct {
+type Task struct {
 	id       int
 	title    string
 	started  time.Time
 	finished time.Time
 
 	// private
-	data *T
-	do   func(data *T, ch chan<- tea.Msg)
+	do func(ch chan<- tea.Msg)
 }
 
-func (t *Task[T]) ID() int {
+func (t *Task) ID() int {
 	return t.id
 }
 
-func (t *Task[T]) Title() string {
+func (t *Task) Title() string {
 	return t.title
 }
 
-func (t *Task[T]) StartedAt() time.Time {
+func (t *Task) StartedAt() time.Time {
 	return t.started
 }
 
-func (t *Task[T]) FinishedAt() time.Time {
+func (t *Task) FinishedAt() time.Time {
 	return t.finished
 }
 
-func (t *Task[T]) Finish() {
+func (t *Task) Finish() {
 	t.finished = time.Now()
 }
 
-func (t *Task[T]) Run(ch chan<- tea.Msg) {
+func (t *Task) Run(ch chan<- tea.Msg) {
 	if t.do != nil {
-		t.do(t.data, ch)
+		t.do(ch)
 	}
 }
 
 // TODO: implement!!!!!!!!!!!!!!!!!!!!!!!!!!!
-func (t *Task[T]) Cancel() {}
+func (t *Task) Cancel() {}
 
-func NewTask[T any](id int, title string, instance *T, do func(data *T, ch chan<- tea.Msg)) *Task[T] {
-	return &Task[T]{id: id, title: title, data: instance, do: do}
+func NewTask(id int, title string, do func(ch chan<- tea.Msg)) *Task {
+	return &Task{id: id, title: title, do: do}
 }

@@ -1,12 +1,16 @@
 package task
 
 import (
+	"fmt"
 	"log"
 
+	"github.com/Lazy-Parser/TUI/internal/logic"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type TaskManager struct {
+	logic *logic.Logic
+
 	// list of all tasks (new and old)
 	tasks []Tasker
 	// listen for new task to exec
@@ -15,11 +19,16 @@ type TaskManager struct {
 	quit chan struct{}
 }
 
-func CreateTaskManager() *TaskManager {
+func CreateTaskManager() (*TaskManager, error) {
+	l, err := logic.NewLogic()
+	if err != nil {
+		return nil, fmt.Errorf("failed to create logic service. reason: %v", err)
+	}
 	return &TaskManager{
+		logic:   l,
 		tasksCh: make(chan Tasker, 1024),
 		quit:    make(chan struct{}, 1),
-	}
+	}, nil
 }
 
 func (manager *TaskManager) Stop() {
@@ -56,9 +65,13 @@ func (manager *TaskManager) Run(ch chan tea.Msg) {
 }
 
 // creates a task for the corresponding message
-func (manager *TaskManager) ConsumeMsg(msg tea.Msg) {
+func (manager *TaskManager) HandleMsg(msg tea.Msg) {
 	switch msg := msg.(type) {
 	case NewTimerTaskMsg:
+		log.Println("Start timer task!")
 		manager.Add(NewTimerTask(msg.Id))
+	case NewFetchPoolTaskMsg:
+		log.Println("Start fetch pool task!")
+		manager.Add(NewFetchPoolTask(manager.logic, msg.Address, msg.Network))
 	}
 }
