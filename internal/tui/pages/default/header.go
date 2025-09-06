@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Lazy-Parser/TUI/internal/logic"
 	"github.com/Lazy-Parser/TUI/internal/task"
 	"github.com/Lazy-Parser/TUI/internal/tui/common"
 	tea "github.com/charmbracelet/bubbletea"
@@ -17,8 +18,8 @@ import (
 // TODO: Very important!!! This page updates always. So when other page selected, it update ticker and make update all layout and selected page too. Solve it, to not rerender when not selected.
 // TODO: when i will make the server, this app will be like an admin panel. Here, in header, i want to add a string like "Server health check: Running"
 type modelHeader struct {
-	cpuInfo []cpu.InfoStat
-	os      string
+	cpuInfo  []cpu.InfoStat
+	os       string
 	time     time.Duration
 	someInfo string
 	logo     string
@@ -28,14 +29,14 @@ type modelHeader struct {
 
 func (m *modelHeader) Init() tea.Cmd {
 	// send msg to create a timer task
-	return common.CmdHandler(task.NewTimerTaskMsg{ Id: 0 })
+	return common.CmdHandler(task.NewTimerTaskMsg{Id: 0})
 }
 
 func (m *modelHeader) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	var cmd tea.Cmd
 
 	switch msg := msg.(type) {
-	case task.TimerTickMsg: // from the background task
+	case logic.TimerTickMsg: // from the background task
 		if msg.Id == 0 {
 			m.time = msg.T
 		}
@@ -111,8 +112,8 @@ func newHeader() *modelHeader {
 	}
 
 	return &modelHeader{
-		logo:        logo,
-		os:          runtime.GOOS,
-		cpuInfo:  cpuInfo,
+		logo:    logo,
+		os:      runtime.GOOS,
+		cpuInfo: cpuInfo,
 	}
 }

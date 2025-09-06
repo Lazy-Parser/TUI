@@ -15,7 +15,8 @@ type Mode int
 const (
 	ModeSelection Mode = iota
 	ModeAddPool
-	ModeGeneration // maybe split generation to the "GenerationExchanges" and "GenerationManually"
+	ModeGenerationExchanges // maybe split generation to the "GenerationExchanges" and "GenerationManually"
+	ModeGenerationAddPool
 )
 
 type mainView struct {
@@ -28,9 +29,10 @@ func NewMain() tea.Model {
 	return &mainView{
 		mode: ModeSelection,
 		modeModels: map[Mode]tea.Model{
-			ModeSelection:  NewSelection(),
-			ModeAddPool:    NewAddPool(),
-			ModeGeneration: NewGenetationMode(),
+			ModeSelection:           NewSelection(),
+			ModeAddPool:             NewAddPool(),
+			ModeGenerationAddPool:   NewModeGenerationAddPool(),
+			ModeGenerationExchanges: NewModeExchangeGenerator(),
 		},
 	}
 }
@@ -76,37 +78,39 @@ func (model *mainView) View() string {
 }
 
 // methods
-func (m *mainView) handleSelectionSubmit(msg SelectionModeSubmitMsg) (tea.Model, tea.Cmd) {
-	m.mode = ModeGeneration
-	var str string
-	for _, exchange := range msg.Elems {
-		str += exchange + " | "
-	}
-	m.getGenerationMode().Address = ""
-	m.getGenerationMode().Network = ""
-
-	return m, nil
-}
 func (m *mainView) handleSelectionMsg() (tea.Model, tea.Cmd) {
 	m.mode = ModeSelection
 	return m, nil
-}
-
-func (m *mainView) handleAddPoolSubmit(msg AddPoolModeSubmitMsg) (tea.Model, tea.Cmd) {
-	m.mode = ModeGeneration
-	m.getGenerationMode().Set(msg.Address, msg.Network)
-
-	// also do not forget to Init() this model to start generation process!
-	cmd := m.getGenerationMode().Init()
-
-	return m, cmd
 }
 func (m *mainView) handleAddPoolMsg() (tea.Model, tea.Cmd) {
 	m.mode = ModeAddPool
 	return m, nil
 }
 
+func (m *mainView) handleSelectionSubmit(msg SelectionModeSubmitMsg) (tea.Model, tea.Cmd) {
+	m.mode = ModeGenerationExchanges
+	
+	m.getGenerationExchangeMode().SetExchanges(msg.Elems)
+	cmd := m.getGenerationExchangeMode().Init()
+
+	return m, cmd
+}
+
+func (m *mainView) handleAddPoolSubmit(msg AddPoolModeSubmitMsg) (tea.Model, tea.Cmd) {
+	m.mode = ModeGenerationAddPool
+	m.getGenerationAddPoolMode().Set(msg.Address, msg.Network)
+
+	// also do not forget to Init() this model to start generation process!
+	cmd := m.getGenerationAddPoolMode().Init()
+
+	return m, cmd
+}
+
 // helpers
-func (m *mainView) getGenerationMode() *GeneratationMode {
-	return m.modeModels[ModeGeneration].(*GeneratationMode)
+func (m *mainView) getGenerationAddPoolMode() *GeneratationPoolMode {
+	return m.modeModels[ModeGenerationAddPool].(*GeneratationPoolMode)
+}
+
+func (m *mainView) getGenerationExchangeMode() *ModeExchangeGenerator {
+	return m.modeModels[ModeGenerationExchanges].(*ModeExchangeGenerator)
 }

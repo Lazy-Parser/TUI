@@ -6,6 +6,7 @@ import (
 
 	"github.com/Lazy-Parser/Collector/market"
 	"github.com/Lazy-Parser/TUI/internal/logic"
+	"github.com/Lazy-Parser/TUI/internal/service"
 	"github.com/Lazy-Parser/TUI/internal/task"
 	"github.com/Lazy-Parser/TUI/internal/tui/common"
 	tea "github.com/charmbracelet/bubbletea"
@@ -15,7 +16,7 @@ var (
 	internalFieldsEmpty = "Warning in Page -> Generator -> Generation mode -> Init(): cannot send msg to start 'Fetch pool' task, because internal fields 'Address' or 'Network' is / are empty"
 )
 
-type GeneratationMode struct {
+type GeneratationPoolMode struct {
 	Address string
 	Network string
 
@@ -24,11 +25,11 @@ type GeneratationMode struct {
 	isLoading bool
 }
 
-func NewGenetationMode() *GeneratationMode {
-	return &GeneratationMode{isLoading: true}
+func NewModeGenerationAddPool() *GeneratationPoolMode {
+	return &GeneratationPoolMode{isLoading: true}
 }
 
-func (model *GeneratationMode) Init() tea.Cmd {
+func (model *GeneratationPoolMode) Init() tea.Cmd {
 	if model.Address == "" || model.Network == "" {
 		log.Print(internalFieldsEmpty)
 		return nil
@@ -41,16 +42,18 @@ func (model *GeneratationMode) Init() tea.Cmd {
 	})
 }
 
-func (model *GeneratationMode) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
+func (model *GeneratationPoolMode) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case logic.FetchPoolResultMsg:
 		return model.handleFetchPoolResult(msg)
+	case service.ResponseSavePoolMsg:
+		return model.handleSavePoolResponse(msg)
 	}
 
 	return model, nil
 }
 
-func (model *GeneratationMode) View() string {
+func (model *GeneratationPoolMode) View() string {
 	var str string
 
 	if model.isLoading {
@@ -64,17 +67,34 @@ func (model *GeneratationMode) View() string {
 }
 
 // methods
-func (mode *GeneratationMode) Set(address string, network string) {
+func (mode *GeneratationPoolMode) Set(address string, network string) {
 	mode.Address = address
 	mode.Network = network
 }
 
-func (mode *GeneratationMode) handleFetchPoolResult(msg logic.FetchPoolResultMsg) (tea.Model, tea.Cmd) {
+func (mode *GeneratationPoolMode) handleFetchPoolResult(msg logic.FetchPoolResultMsg) (tea.Model, tea.Cmd) {
 	if msg.Err != nil {
 		mode.info = msg.Err.Error()
 	}
 	mode.pool = msg.Pool
 	mode.isLoading = false
+
+	// try to save to database. TODO: ask if user want to save pool to the db
+	savePool := common.CmdHandler(service.RequestSavePoolMsg{
+		Pool:       msg.Pool,
+		BaseToken:  msg.Pool.Pair.BaseToken,
+		QuoteToken: msg.Pool.Pair.QuoteToken,
+	})
+
+	return mode, savePool
+}
+
+func (mode *GeneratationPoolMode) handleSavePoolResponse(msg service.ResponseSavePoolMsg) (tea.Model, tea.Cmd) {
+	if msg.Err == nil {
+		mode.info = "saved to database!"
+	} else {
+		mode.info = msg.Err.Error()
+	}
 
 	return mode, nil
 }

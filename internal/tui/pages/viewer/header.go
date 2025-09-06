@@ -3,24 +3,25 @@ package page_viewer
 import (
 	"fmt"
 
+	"github.com/Lazy-Parser/TUI/internal/service"
 	tea "github.com/charmbracelet/bubbletea"
 )
 
 type header struct {
 	tokensAmount int
-	pairsAmount  int
+	poolsAmount  int
 }
 
-func NewHeader() tea.Model { return &header{tokensAmount: 0, pairsAmount: 0} }
+func NewHeader() tea.Model { return &header{tokensAmount: -1, poolsAmount: -1} }
 
 func (h *header) Init() tea.Cmd { return nil }
 
 func (h *header) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
-	case tokenAmountMsg:
-		h.tokensAmount = msg.amount
-	case pairAmountMsg:
-		h.pairsAmount = msg.amount
+	case service.ResponseGetAllTokensMsg:
+		return h.handleAllTokensResponse(msg)
+	case service.ResponseGetAllPoolsMsg:
+		return h.handleAllPoolsResponse(msg)
 	}
 
 	return h, nil
@@ -30,7 +31,9 @@ func (h *header) View() string {
 	var str string
 
 	str += "Tokens: "
-	if h.tokensAmount == 0 {
+	if h.tokensAmount == -1 {
+		str += "?"
+	} else if h.tokensAmount == 0 {
 		str += "No tokens"
 	} else {
 		str += fmt.Sprintf("%d", h.tokensAmount)
@@ -38,11 +41,30 @@ func (h *header) View() string {
 
 	str += "\n"
 	str += "Pairs: "
-	if h.pairsAmount == 0 {
+	if h.poolsAmount == -1 {
 		str += "?"
+	} else if h.poolsAmount == 0 {
+		str += "No Pools"
 	} else {
-		str += fmt.Sprintf("%d", h.pairsAmount)
+		str += fmt.Sprintf("%d", h.poolsAmount)
 	}
 
 	return str
+}
+
+// methods
+func (h *header) handleAllTokensResponse(msg service.ResponseGetAllTokensMsg) (tea.Model, tea.Cmd) {
+	if msg.Err == nil {
+		h.tokensAmount = len(msg.Tokens)
+	}
+
+	return h, nil
+}
+
+func (h *header) handleAllPoolsResponse(msg service.ResponseGetAllPoolsMsg) (tea.Model, tea.Cmd) {
+	if msg.Err == nil {
+		h.poolsAmount = len(msg.Pools)
+	}
+
+	return h, nil
 }

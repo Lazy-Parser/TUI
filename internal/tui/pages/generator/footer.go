@@ -35,7 +35,7 @@ func (f *footer) Init() tea.Cmd {
 func (f *footer) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg.(type) {
 	case SelectionModeSubmitMsg, AddPoolModeSubmitMsg:
-		f.mode = ModeGeneration
+		f.mode = ModeGenerationAddPool
 		return f, nil
 
 	case SelectionModeMsg:
@@ -57,7 +57,7 @@ func (f *footer) View() string {
 		bindings = common.KeyMapToSlice(f.keySelection)
 	case ModeAddPool:
 		bindings = common.KeyMapToSlice(f.keyAddPool)
-	case ModeGeneration:
+	case ModeGenerationAddPool:
 		bindings = common.KeyMapToSlice(f.keyGeneration)
 	}
 	

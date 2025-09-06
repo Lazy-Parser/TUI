@@ -2,11 +2,14 @@ package component
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	tea "github.com/charmbracelet/bubbletea"
 	"github.com/charmbracelet/lipgloss"
 )
+
+// TODO: think about passing cmd with each task, instead of sending them by myself
 
 // Styles
 var (
@@ -23,8 +26,9 @@ type TaskTimerTickMsg struct {
 	id   int
 	time time.Time
 }
+
 // msg, that signals end of all tasks
-type TaskEndMsg struct {}
+type TaskEndMsg struct{}
 
 // Commands
 // Command for timer
@@ -88,9 +92,7 @@ func (t Task) GetElapsedTime() string {
 
 	seconds := int(duration.Seconds())
 	minutes := seconds / 60
-	if seconds < 60 {
-		seconds = seconds % 60
-	}
+	seconds = seconds % 60
 
 	return fmt.Sprintf("%dm %ds", minutes, seconds)
 }
@@ -182,11 +184,11 @@ func (p TaskFlow) View() string {
 		}
 	}
 
-	if p.note != "" {
-		str += "\n"
-		str += bold.Render(p.note)
-		str += "\n"
-	}
+	// if p.note != "" {
+	// 	str += "\n"
+	// 	str += bold.Render(p.note)
+	// 	str += "\n"
+	// }
 
 	return str
 }
@@ -209,6 +211,7 @@ func (tf *TaskFlow) SetCurrentStatus(status TaskStatus) {
 func (tf *TaskFlow) NextTask() tea.Cmd {
 	// if no next tasks
 	if tf.idx == len(tf.tasks)-1 {
+		log.Println("End of tasks!")
 		tf.note = "Complete succesful!"
 		return sendTaskEndMsg()
 	}
